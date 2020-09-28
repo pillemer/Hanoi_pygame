@@ -88,6 +88,9 @@ while True:
         if event.type == pygame.MOUSEBUTTONDOWN:
             selected_disc = [disc for disc in all_discs if disc.rect.collidepoint(event.pos)]
             if selected_disc[0].movable == True:
+                print(" I can move!")
+            else:
+                print("I can't move.")
                 
 
     all_discs.draw(SCREEN)
