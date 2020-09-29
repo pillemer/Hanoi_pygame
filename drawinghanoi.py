@@ -60,15 +60,15 @@ class Disc(pygame.sprite.Sprite):
 
 # create discs and add them to group
 lrgDisc = Disc(RED, LRG_WIDTH, DISC_HEIGHT)
-lrgDisc.rect.x = (pegs[0] - (LRG_WIDTH / 2))
+lrgDisc.rect.x = (pegs[0] - (lrgDisc.rect.width / 2))
 lrgDisc.rect.y = BOTTOM_Y
 
 medDisc = Disc(GREEN, MED_WIDTH, DISC_HEIGHT)
-medDisc.rect.x = (pegs[0] - (MED_WIDTH / 2))
+medDisc.rect.x = (pegs[0] - (medDisc.rect.width / 2))
 medDisc.rect.y = MIDDLE_Y
 
 smlDisc = Disc(BLUE, SML_WIDTH, DISC_HEIGHT)
-smlDisc.rect.x = (pegs[0] - (SML_WIDTH / 2))
+smlDisc.rect.x = (pegs[0] - (smlDisc.rect.width / 2))
 smlDisc.rect.y = TOP_Y
 smlDisc.movable = True # top disc is free to move
 
@@ -87,7 +87,6 @@ board = [A, B, C]
 
 # start with smallest disc selected on the left peg
 selection = 2
-current_peg = 0
 
 # TODO function that checks if selection is legal
 def is_movable(disc):
@@ -100,25 +99,38 @@ while True:
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
-            print('left')
+            for i, peg in enumerate(board):
+                if discs[selection] in peg: # and movable(discs[selection]):
+                    peg.remove(discs[selection])
+                    if i == 0:
+                        i = 2
+                    else:
+                        i -= 1
+                    board[i].append(discs[selection])
+                    discs[selection].location = i
+                    discs[selection].rect.x = (pegs[discs[selection].location] - (discs[selection].rect.width / 2))
+                    break
 
         if keys[pygame.K_RIGHT]:
-            for peg in board:
-                if discs[selection] in peg:
-                    peg = peg.index
-            discs[selection].rect.x = (pegs[0] - (SML_WIDTH / 2))
-            print(f'disc location is: {peg}')
+            for i, peg in enumerate(board):
+                if discs[selection] in peg: # and movable(discs[selection]):
+                    peg.remove(discs[selection])
+                    if i == 2:
+                        i = 0
+                    else:
+                        i += 1
+                    board[i].append(discs[selection])
+                    discs[selection].location = i
+                    discs[selection].rect.x = (pegs[discs[selection].location] - (discs[selection].rect.width / 2))
+                    break
 
         # switch selection between discs
         if keys[pygame.K_UP]:
             if selection == 2:
                 selection = 0
-                print('big peg selected.')
             else:
                 selection += 1
                 if selection == 1:
-                    print('medium peg selected.')
-                else: print('small peg selected.')
 
         if keys[pygame.K_DOWN]:
             if selection == 0:
