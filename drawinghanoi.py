@@ -42,10 +42,18 @@ def draw_board():
     peg_b = pygame.rect.Rect(pygame.draw.rect(SCREEN, BLACK, ((SCREEN_WIDTH / 2), SCREEN_HEIGHT - round(SCREEN_HEIGHT * (3/4)), round(SCREEN_WIDTH / 70), round(SCREEN_HEIGHT * (3/5)))))
     peg_c = pygame.rect.Rect(pygame.draw.rect(SCREEN, BLACK, ((SCREEN_WIDTH * (3/4)), SCREEN_HEIGHT - round(SCREEN_HEIGHT * (3/4)), round(SCREEN_WIDTH / 70), round(SCREEN_HEIGHT * (3/5)))))
 
+def draw_prompt(selection):
+    fontObj = pygame.font.Font('freesansbold.ttf', 32)
+    text_options = ['Large disc Selected', 'Medium disc selected', 'Small disc selected', 'Cannot move left', 'cannot move right', 'cannot place big disc on smaller']
+    text = fontObj.render(text_options[selection], True, BLUE)
+    textRectObj = text.get_rect()
+    textRectObj.center = (MIDDLE_PEG, 0 + textRectObj.height/2)
+    SCREEN.blit(text, textRectObj)
+
+
 # set up the pegs
 pegs = [LEFT_PEG, MIDDLE_PEG, RIGHT_PEG]
-
-
+y_list = [BOTTOM_Y, MIDDLE_Y, TOP_Y]
 
 # create the disc class
 class Disc(pygame.sprite.Sprite):
@@ -72,7 +80,7 @@ smlDisc.rect.x = (pegs[0] - (smlDisc.rect.width / 2))
 smlDisc.rect.y = TOP_Y
 smlDisc.movable = True # top disc is free to move
 
-#possibly don't need after all (delete?)
+# add discs to Sprite group
 all_discs = pygame.sprite.Group()
 all_discs.add(lrgDisc)
 all_discs.add(medDisc)
@@ -80,17 +88,18 @@ all_discs.add(smlDisc)
 
 # board game
 discs = [lrgDisc, medDisc, smlDisc]
-A = [discs[0], discs[1], discs[2]]
-B = []
-C = []
-board = [A, B, C]
+board = [[discs[0], discs[1], discs[2]], [], []]
 
 # start with smallest disc selected on the left peg
-selection = 2
+selection = text_selection = 2
 
-# TODO function that checks if selection is legal
-def is_movable(disc):
-    pass
+def move(selection, i, peg):
+    temp = discs[selection] # hold the disc while we remove it from one peg and append it to the next.
+    peg.remove(discs[selection])
+    discs[selection].rect.y = y_list[len(board[i])]                    
+    board[i].append(temp)
+    discs[selection].location = i
+    discs[selection].rect.x = (pegs[discs[selection].location] - (discs[selection].rect.width / 2))
 
 while True:
     for event in pygame.event.get():
@@ -100,44 +109,49 @@ while True:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             for i, peg in enumerate(board):
-                if discs[selection] in peg: # and movable(discs[selection]):
-                    peg.remove(discs[selection])
+                if discs[selection] in peg:
                     if i == 0:
-                        i = 2
+                        destination = 2
                     else:
-                        i -= 1
-                    board[i].append(discs[selection])
-                    discs[selection].location = i
-                    discs[selection].rect.x = (pegs[discs[selection].location] - (discs[selection].rect.width / 2))
+                        destination = i - 1
+                    if len(board[destination]) <= selection:
+                        move(selection, destination, peg)
+                    else: 
+                        text_selection = 3
                     break
 
         if keys[pygame.K_RIGHT]:
             for i, peg in enumerate(board):
-                if discs[selection] in peg: # and movable(discs[selection]):
-                    peg.remove(discs[selection])
+                if discs[selection] in peg:
                     if i == 2:
-                        i = 0
+                        destination = 0
                     else:
-                        i += 1
-                    board[i].append(discs[selection])
-                    discs[selection].location = i
-                    discs[selection].rect.x = (pegs[discs[selection].location] - (discs[selection].rect.width / 2))
+                        destination = i + 1
+                    if len(board[destination]) <= selection:
+                        move(selection, destination, peg)
+                    else: 
+                        text_selection = 3
                     break
 
         # switch selection between discs
         if keys[pygame.K_UP]:
             if selection == 2:
                 selection = 0
+                text_selection = 0
             else:
                 selection += 1
-                if selection == 1:
+                text_selection = selection
 
         if keys[pygame.K_DOWN]:
             if selection == 0:
                 selection = 2
+                text_selection = 0
             else:
                 selection -= 1   
+                text_selection = selection
+
 
     draw_board()
     all_discs.draw(SCREEN)
+    draw_prompt(text_selection)
     pygame.display.update()
