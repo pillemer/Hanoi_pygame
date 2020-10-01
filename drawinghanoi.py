@@ -134,10 +134,14 @@ def update_movable():
     for peg in board:
         if discs[selection] in peg and len(peg) < selection + 2:
             discs[selection].movable = True
-            print(f'selection {selection} set to movable')
-        elif discs[selection] in peg:
-            print(f'selection {selection} set to not movable')
+            break
+        else:
             discs[selection].movable = False
+
+    # exception case for medium disc under small disc
+    if selection == 1 and discs[2] in peg:
+        discs[selection].movable = False
+        
 
 
 # ----------------- game loop ----------------- #
@@ -198,3 +202,5 @@ while True:
     all_discs.draw(SCREEN)
     draw_prompt(text_selection)
     pygame.display.update()
+
+
