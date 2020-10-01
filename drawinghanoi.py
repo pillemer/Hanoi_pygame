@@ -2,6 +2,8 @@ import pygame
 
 pygame.init()
 
+# ------------------- set up ------------------- #
+
 # set up the window
 SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
 SCREEN = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
@@ -34,28 +36,6 @@ LRG_WIDTH = SCREEN_WIDTH / 4
 MED_WIDTH = LRG_WIDTH - (2 * MARGIN_X)
 SML_WIDTH = LRG_WIDTH - (4 * MARGIN_X)
 
-# draws base, pegs and background
-def draw_board():
-    SCREEN.fill(WHITE)
-    pygame.draw.rect(SCREEN, BLACK, (0, SCREEN_HEIGHT-(2*round(SCREEN_HEIGHT/8)), SCREEN_WIDTH, round(SCREEN_HEIGHT/8))) # base
-    peg_a = pygame.rect.Rect(pygame.draw.rect(SCREEN, BLACK, ((SCREEN_WIDTH / 4), SCREEN_HEIGHT - round(SCREEN_HEIGHT * (3/4)), round(SCREEN_WIDTH / 70), round(SCREEN_HEIGHT * (3/5)))))
-    peg_b = pygame.rect.Rect(pygame.draw.rect(SCREEN, BLACK, ((SCREEN_WIDTH / 2), SCREEN_HEIGHT - round(SCREEN_HEIGHT * (3/4)), round(SCREEN_WIDTH / 70), round(SCREEN_HEIGHT * (3/5)))))
-    peg_c = pygame.rect.Rect(pygame.draw.rect(SCREEN, BLACK, ((SCREEN_WIDTH * (3/4)), SCREEN_HEIGHT - round(SCREEN_HEIGHT * (3/4)), round(SCREEN_WIDTH / 70), round(SCREEN_HEIGHT * (3/5)))))
-
-def draw_prompt(selection):
-    fontObj = pygame.font.Font('freesansbold.ttf', 32)
-    text_options = ['Large disc Selected', 
-                    'Medium disc selected', 
-                    'Small disc selected', 
-                    'Cannot move left', 
-                    'cannot move right', 
-                    'cannot place big disc on smaller', 
-                    'cannot move disc underneath another']
-    text = fontObj.render(text_options[selection], True, BLUE)
-    textRectObj = text.get_rect()
-    textRectObj.center = (MIDDLE_PEG, 0 + textRectObj.height/2)
-    SCREEN.blit(text, textRectObj)
-
 # set up the pegs
 pegs = [LEFT_PEG, MIDDLE_PEG, RIGHT_PEG]
 y_list = [BOTTOM_Y, MIDDLE_Y, TOP_Y]
@@ -68,7 +48,6 @@ class Disc(pygame.sprite.Sprite):
         self.image = pygame.Surface([width, height])
         self.image.fill(color)
         self.movable = False
-        self.location = 0
         self.rect = self.image.get_rect()
 
 # create discs and add them to group
@@ -98,6 +77,32 @@ board = [[discs[0], discs[1], discs[2]], [], []]
 # start with smallest disc selected on the left peg
 selection = text_selection = 2
 
+
+# --------------- helper functions --------------- #
+
+# draws base, pegs and background
+def draw_board():
+    SCREEN.fill(WHITE)
+    pygame.draw.rect(SCREEN, BLACK, (0, SCREEN_HEIGHT-(2*round(SCREEN_HEIGHT/8)), SCREEN_WIDTH, round(SCREEN_HEIGHT/8))) # base
+    peg_a = pygame.rect.Rect(pygame.draw.rect(SCREEN, BLACK, ((SCREEN_WIDTH / 4), SCREEN_HEIGHT - round(SCREEN_HEIGHT * (3/4)), round(SCREEN_WIDTH / 70), round(SCREEN_HEIGHT * (3/5)))))
+    peg_b = pygame.rect.Rect(pygame.draw.rect(SCREEN, BLACK, ((SCREEN_WIDTH / 2), SCREEN_HEIGHT - round(SCREEN_HEIGHT * (3/4)), round(SCREEN_WIDTH / 70), round(SCREEN_HEIGHT * (3/5)))))
+    peg_c = pygame.rect.Rect(pygame.draw.rect(SCREEN, BLACK, ((SCREEN_WIDTH * (3/4)), SCREEN_HEIGHT - round(SCREEN_HEIGHT * (3/4)), round(SCREEN_WIDTH / 70), round(SCREEN_HEIGHT * (3/5)))))
+
+# text prompt selection and draw function
+def draw_prompt(selection):
+    fontObj = pygame.font.Font('freesansbold.ttf', 32)
+    text_options = ['Large disc Selected', 
+                    'Medium disc selected', 
+                    'Small disc selected', 
+                    'Cannot move left', 
+                    'cannot move right', 
+                    'cannot place big disc on smaller', 
+                    'cannot move disc underneath another']
+    text = fontObj.render(text_options[selection], True, BLUE)
+    textRectObj = text.get_rect()
+    textRectObj.center = (MIDDLE_PEG, SCREEN_HEIGHT - textRectObj.height)
+    SCREEN.blit(text, textRectObj)
+
 # set destination peg for each direction
 def set_destination(origin, moving_right):
     if origin == 0 and not moving_right:
@@ -114,8 +119,9 @@ def select_disc(selection, moving_up):
     elif selection == 0 and not moving_up:
         return 2
     else:
-        return selection + (2 * int(moving_up) -1)
+        return selection + (2 * int(moving_up) - 1)
 
+# remove disc from current peg and place on new one
 def move(selection, i, peg):
     temp = discs[selection] # hold the disc while we remove it from one peg and append it to the next.
     peg.remove(discs[selection])
@@ -123,6 +129,18 @@ def move(selection, i, peg):
     board[i].append(temp)
     discs[selection].location = i
     discs[selection].rect.x = (pegs[discs[selection].location] - (discs[selection].rect.width / 2))
+
+def update_movable():
+    for peg in board:
+        if discs[selection] in peg and len(peg) < selection + 2:
+            discs[selection].movable = True
+            print(f'selection {selection} set to movable')
+        elif discs[selection] in peg:
+            print(f'selection {selection} set to not movable')
+            discs[selection].movable = False
+
+
+# ----------------- game loop ----------------- #
 
 while True:
     for event in pygame.event.get():
@@ -133,30 +151,48 @@ while True:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             for i, peg in enumerate(board):
-                if discs[selection] in peg:
+                if discs[selection] in peg and discs[selection].movable:
                     destination = set_destination(i, False)
+
+                    # can't move medium sized disc on top of small disc:
+                    if selection == 1 and discs[2] in board[destination]:
+                        text_selection = 5
+                        break
+
                     if len(board[destination]) <= selection:
                         move(selection, destination, peg)
                     else: 
-                        text_selection = 3
+                        text_selection = 5
                     break
 
         if keys[pygame.K_RIGHT]:
             for i, peg in enumerate(board):
-                if discs[selection] in peg:
+                if discs[selection] in peg and discs[selection].movable:
                     destination = set_destination(i, True)
+
+                    # can't move medium sized disc on top of small disc:
+                    if selection == 1 and discs[2] in board[destination]:
+                        text_selection = 5
+                        break
+
                     if len(board[destination]) <= selection:
                         move(selection, destination, peg)
                     else: 
-                        text_selection = 4
+                        text_selection = 5
                     break
 
         # switch selection between discs
         if keys[pygame.K_UP]:
             selection = text_selection = select_disc(selection, True)
+            update_movable()
+            if not discs[selection].movable:
+                text_selection = 6
 
         if keys[pygame.K_DOWN]:
             selection = text_selection = select_disc(selection, False)
+            update_movable()
+            if not discs[selection].movable:
+                text_selection = 6
 
     draw_board()
     all_discs.draw(SCREEN)
