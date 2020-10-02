@@ -19,7 +19,7 @@ BLUE =   (0,   0,   255)
 # calculate the sizes
 PADDING = 5
 MARGIN_X = 20
-DISC_HEIGHT = round(SCREEN_HEIGHT/8)
+DISC_HEIGHT = round(SCREEN_HEIGHT/8)   # adjusting needed for scaling
 
 # x values / peg locations
 LEFT_PEG = SCREEN_WIDTH / 4
@@ -27,14 +27,18 @@ MIDDLE_PEG = SCREEN_WIDTH / 2
 RIGHT_PEG = SCREEN_WIDTH  * (3/4)
 
 # y values for disc locations
-BOTTOM_Y = SCREEN_HEIGHT - DISC_HEIGHT * 3
+BOTTOM_Y = SCREEN_HEIGHT - DISC_HEIGHT * 3   # adjusting needed for scaling
 MIDDLE_Y = BOTTOM_Y - DISC_HEIGHT - PADDING
 TOP_Y = MIDDLE_Y - DISC_HEIGHT - PADDING
 
 # calculate disc width
-LRG_WIDTH = SCREEN_WIDTH / 4 
-MED_WIDTH = LRG_WIDTH - (2 * MARGIN_X)
-SML_WIDTH = LRG_WIDTH - (4 * MARGIN_X)
+LRG_WIDTH = SCREEN_WIDTH / 4 - (0 * MARGIN_X)
+MED_WIDTH = LRG_WIDTH - (1 * MARGIN_X)
+SML_WIDTH = LRG_WIDTH - (2 * MARGIN_X)
+
+# BASE_WIDTH = SCREEN_WIDTH / 4
+# for i in range(n):
+#     pass
 
 # set up the pegs
 pegs = [LEFT_PEG, MIDDLE_PEG, RIGHT_PEG]
@@ -48,6 +52,7 @@ class Disc(pygame.sprite.Sprite):
         self.image = pygame.Surface([width, height])
         self.image.fill(color)
         self.movable = False
+        self.width = width
         self.rect = self.image.get_rect()
 
 # create discs and add them to group
