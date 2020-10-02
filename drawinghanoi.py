@@ -1,6 +1,13 @@
 import pygame
+import random
 
 pygame.init()
+
+
+# ------------------- how many discs? ------------------- #
+
+# change this number to adjust the number of discs in the puzzle (Max = 7)
+disc_number = 3
 
 # ------------------- set up ------------------- #
 
@@ -13,36 +20,39 @@ pygame.display.set_caption('Drawing Hanoi Puzzle')
 BLACK =  (0,   0,   0  )
 WHITE =  (255, 255, 255)
 RED =    (255, 0,   0  )
+ORANGE = (255, 128, 0  )
+YELLOW = (255, 255, 0  )
 GREEN =  (0,   255, 0  )
+AQUA =   (0,   255, 255)
 BLUE =   (0,   0,   255)
+PURPLE = (255, 0,   255)
+colour_list = [RED, ORANGE, YELLOW, GREEN, AQUA, BLUE, PURPLE]
+random.shuffle(colour_list)
 
-# calculate the sizes
+# set the size parameters
 PADDING = 5
 MARGIN_X = 20
-DISC_HEIGHT = round(SCREEN_HEIGHT/8)   # adjusting needed for scaling
+DISC_HEIGHT = round(SCREEN_HEIGHT/16)   # possible adjusting needed for scaling
 
 # x values / peg locations
-LEFT_PEG = SCREEN_WIDTH / 4
-MIDDLE_PEG = SCREEN_WIDTH / 2
-RIGHT_PEG = SCREEN_WIDTH  * (3/4)
+pegs = [SCREEN_WIDTH / 4, SCREEN_WIDTH / 2, SCREEN_WIDTH  * (3/4)]
 
 # y values for disc locations
-BOTTOM_Y = SCREEN_HEIGHT - DISC_HEIGHT * 3   # adjusting needed for scaling
-MIDDLE_Y = BOTTOM_Y - DISC_HEIGHT - PADDING
-TOP_Y = MIDDLE_Y - DISC_HEIGHT - PADDING
+y_list = []
+for i in range(disc_number):
+    y_value = (SCREEN_HEIGHT-(round(SCREEN_HEIGHT / 8))) - ((3 + i) * DISC_HEIGHT) - i * (PADDING)
+    y_list.append(y_value)
+
 
 # calculate disc width
 LRG_WIDTH = SCREEN_WIDTH / 4 - (0 * MARGIN_X)
 MED_WIDTH = LRG_WIDTH - (1 * MARGIN_X)
 SML_WIDTH = LRG_WIDTH - (2 * MARGIN_X)
+width_list = []
 
-# BASE_WIDTH = SCREEN_WIDTH / 4
-# for i in range(n):
-#     pass
-
-# set up the pegs
-pegs = [LEFT_PEG, MIDDLE_PEG, RIGHT_PEG]
-y_list = [BOTTOM_Y, MIDDLE_Y, TOP_Y]
+for i in range(disc_number):
+    disc_width = SCREEN_WIDTH / 4 - (i * MARGIN_X)
+    width_list.append(disc_width)
 
 # create the disc class
 class Disc(pygame.sprite.Sprite):
@@ -56,17 +66,17 @@ class Disc(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
 
 # create discs and add them to group
-lrgDisc = Disc(RED, LRG_WIDTH, DISC_HEIGHT)
+lrgDisc = Disc(colour_list.pop(), width_list[0], DISC_HEIGHT)
 lrgDisc.rect.x = (pegs[0] - (lrgDisc.rect.width / 2))
-lrgDisc.rect.y = BOTTOM_Y
+lrgDisc.rect.y = y_list[0]
 
-medDisc = Disc(GREEN, MED_WIDTH, DISC_HEIGHT)
+medDisc = Disc(colour_list.pop(), width_list[1], DISC_HEIGHT)
 medDisc.rect.x = (pegs[0] - (medDisc.rect.width / 2))
-medDisc.rect.y = MIDDLE_Y
+medDisc.rect.y = y_list[1]
 
-smlDisc = Disc(BLUE, SML_WIDTH, DISC_HEIGHT)
+smlDisc = Disc(colour_list.pop(), width_list[2], DISC_HEIGHT)
 smlDisc.rect.x = (pegs[0] - (smlDisc.rect.width / 2))
-smlDisc.rect.y = TOP_Y
+smlDisc.rect.y = y_list[2]
 smlDisc.movable = True # top disc is free to move
 
 # add discs to Sprite group
@@ -88,7 +98,7 @@ selection = text_selection = 2
 # draws base, pegs and background
 def draw_board():
     SCREEN.fill(WHITE)
-    pygame.draw.rect(SCREEN, BLACK, (0, SCREEN_HEIGHT-(2*round(SCREEN_HEIGHT/8)), SCREEN_WIDTH, round(SCREEN_HEIGHT/8))) # base
+    pygame.draw.rect(SCREEN, BLACK, (0, (SCREEN_HEIGHT * (3/4)), SCREEN_WIDTH, round(SCREEN_HEIGHT/8))) # base
     peg_a = pygame.rect.Rect(pygame.draw.rect(SCREEN, BLACK, ((SCREEN_WIDTH / 4), SCREEN_HEIGHT - round(SCREEN_HEIGHT * (3/4)), round(SCREEN_WIDTH / 70), round(SCREEN_HEIGHT * (3/5)))))
     peg_b = pygame.rect.Rect(pygame.draw.rect(SCREEN, BLACK, ((SCREEN_WIDTH / 2), SCREEN_HEIGHT - round(SCREEN_HEIGHT * (3/4)), round(SCREEN_WIDTH / 70), round(SCREEN_HEIGHT * (3/5)))))
     peg_c = pygame.rect.Rect(pygame.draw.rect(SCREEN, BLACK, ((SCREEN_WIDTH * (3/4)), SCREEN_HEIGHT - round(SCREEN_HEIGHT * (3/4)), round(SCREEN_WIDTH / 70), round(SCREEN_HEIGHT * (3/5)))))
@@ -105,7 +115,7 @@ def draw_prompt(selection):
                     'cannot move disc underneath another']
     text = fontObj.render(text_options[selection], True, BLUE)
     textRectObj = text.get_rect()
-    textRectObj.center = (MIDDLE_PEG, SCREEN_HEIGHT - textRectObj.height)
+    textRectObj.center = (pegs[1], SCREEN_HEIGHT - textRectObj.height)
     SCREEN.blit(text, textRectObj)
 
 # set destination peg for each direction
