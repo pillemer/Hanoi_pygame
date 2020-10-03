@@ -7,7 +7,7 @@ pygame.init()
 # ------------------- how many discs? ------------------- #
 
 # change this number to adjust the number of discs in the puzzle (Max = 7)
-disc_number = 3
+disc_number = 7
 
 # ------------------- set up ------------------- #
 
@@ -37,24 +37,7 @@ DISC_HEIGHT = round(SCREEN_HEIGHT/16)   # possible adjusting needed for scaling
 # x values / peg locations
 pegs = [SCREEN_WIDTH / 4, SCREEN_WIDTH / 2, SCREEN_WIDTH  * (3/4)]
 
-# y values for disc locations
-y_list = []
-for i in range(disc_number):
-    y_value = (SCREEN_HEIGHT-(round(SCREEN_HEIGHT / 8))) - ((3 + i) * DISC_HEIGHT) - i * (PADDING)
-    y_list.append(y_value)
-
-
-# calculate disc width
-LRG_WIDTH = SCREEN_WIDTH / 4 - (0 * MARGIN_X)
-MED_WIDTH = LRG_WIDTH - (1 * MARGIN_X)
-SML_WIDTH = LRG_WIDTH - (2 * MARGIN_X)
-width_list = []
-
-for i in range(disc_number):
-    disc_width = SCREEN_WIDTH / 4 - (i * MARGIN_X)
-    width_list.append(disc_width)
-
-# create the disc class
+# create the Disc class
 class Disc(pygame.sprite.Sprite):
 
     def __init__(self, color, width, height):
@@ -65,43 +48,51 @@ class Disc(pygame.sprite.Sprite):
         self.width = width
         self.rect = self.image.get_rect()
 
-# create discs and add them to group
-lrgDisc = Disc(colour_list.pop(), width_list[0], DISC_HEIGHT)
-lrgDisc.rect.x = (pegs[0] - (lrgDisc.rect.width / 2))
-lrgDisc.rect.y = y_list[0]
-
-medDisc = Disc(colour_list.pop(), width_list[1], DISC_HEIGHT)
-medDisc.rect.x = (pegs[0] - (medDisc.rect.width / 2))
-medDisc.rect.y = y_list[1]
-
-smlDisc = Disc(colour_list.pop(), width_list[2], DISC_HEIGHT)
-smlDisc.rect.x = (pegs[0] - (smlDisc.rect.width / 2))
-smlDisc.rect.y = y_list[2]
-smlDisc.movable = True # top disc is free to move
-
-# add discs to Sprite group
+# create discs
+discs = []
+y_list = []
 all_discs = pygame.sprite.Group()
-all_discs.add(lrgDisc)
-all_discs.add(medDisc)
-all_discs.add(smlDisc)
 
-# board game
-discs = [lrgDisc, medDisc, smlDisc]
-board = [[discs[0], discs[1], discs[2]], [], []]
+for i in range(disc_number):
+    y_value = (SCREEN_HEIGHT-(round(SCREEN_HEIGHT / 8))) - ((3 + i) * DISC_HEIGHT) - i * (PADDING)
+    y_list.append(y_value)
+    disc_width = SCREEN_WIDTH / 4 - (i * MARGIN_X)
+    disc = Disc(colour_list.pop(), disc_width, DISC_HEIGHT)
+    disc.rect.x = (pegs[0] - (disc.width / 2))
+    disc.rect.y = y_list[i]
+    all_discs.add(disc)
+    discs.append(disc)
+
+# game board 
+board = [[], [], []]
+board[0] = discs[:]
 
 # start with smallest disc selected on the left peg
-selection = text_selection = 2
-
+selection =  disc_number - 1
+text_selection = 2
 
 # --------------- helper functions --------------- #
 
 # draws base, pegs and background
 def draw_board():
     SCREEN.fill(WHITE)
-    pygame.draw.rect(SCREEN, BLACK, (0, (SCREEN_HEIGHT * (3/4)), SCREEN_WIDTH, round(SCREEN_HEIGHT/8))) # base
-    peg_a = pygame.rect.Rect(pygame.draw.rect(SCREEN, BLACK, ((SCREEN_WIDTH / 4), SCREEN_HEIGHT - round(SCREEN_HEIGHT * (3/4)), round(SCREEN_WIDTH / 70), round(SCREEN_HEIGHT * (3/5)))))
-    peg_b = pygame.rect.Rect(pygame.draw.rect(SCREEN, BLACK, ((SCREEN_WIDTH / 2), SCREEN_HEIGHT - round(SCREEN_HEIGHT * (3/4)), round(SCREEN_WIDTH / 70), round(SCREEN_HEIGHT * (3/5)))))
-    peg_c = pygame.rect.Rect(pygame.draw.rect(SCREEN, BLACK, ((SCREEN_WIDTH * (3/4)), SCREEN_HEIGHT - round(SCREEN_HEIGHT * (3/4)), round(SCREEN_WIDTH / 70), round(SCREEN_HEIGHT * (3/5)))))
+    # base (x,y,w,h)
+    pygame.draw.rect(SCREEN, BLACK, (0, SCREEN_HEIGHT * (3/4), SCREEN_WIDTH, round(SCREEN_HEIGHT/8)))
+    # left peg
+    pygame.draw.rect(SCREEN, BLACK, ((SCREEN_WIDTH / 4), 
+                                    SCREEN_HEIGHT - round(SCREEN_HEIGHT * (3/4)), 
+                                    round(SCREEN_WIDTH / 70), 
+                                    round(SCREEN_HEIGHT * (3/5))))
+    # middle peg
+    pygame.draw.rect(SCREEN, BLACK, ((SCREEN_WIDTH / 2), 
+                                    SCREEN_HEIGHT - round(SCREEN_HEIGHT * (3/4)), 
+                                    round(SCREEN_WIDTH / 70), 
+                                    round(SCREEN_HEIGHT * (3/5))))
+    # right peg
+    pygame.draw.rect(SCREEN, BLACK, ((SCREEN_WIDTH * (3/4)),
+                                    SCREEN_HEIGHT - round(SCREEN_HEIGHT * (3/4)), 
+                                    round(SCREEN_WIDTH / 70), 
+                                    round(SCREEN_HEIGHT * (3/5))))
 
 # text prompt selection and draw function
 def draw_prompt(selection):
@@ -129,10 +120,10 @@ def set_destination(origin, moving_right):
 
 # set new selection for playing disc:
 def select_disc(selection, moving_up):
-    if selection == 2 and moving_up:
+    if selection == len(discs) - 1 and moving_up:
         return 0
     elif selection == 0 and not moving_up:
-        return 2
+        return len(discs) - 1
     else:
         return selection + (2 * int(moving_up) - 1)
 
@@ -143,21 +134,15 @@ def move(selection, i, peg):
     discs[selection].rect.y = y_list[len(board[i])]                    
     board[i].append(temp)
     discs[selection].location = i
-    discs[selection].rect.x = (pegs[discs[selection].location] - (discs[selection].rect.width / 2))
+    discs[selection].rect.x = (pegs[discs[selection].location] - (discs[selection].width / 2))
 
-def update_movable():
+def update_movable():   
     for peg in board:
-        if discs[selection] in peg and len(peg) < selection + 2:
+        if discs[selection] in peg and discs[selection].width <= min(peg, key=lambda x: x.width).width:
             discs[selection].movable = True
             break
         else:
             discs[selection].movable = False
-
-    # exception case for medium disc under small disc
-    if selection == 1 and discs[2] in peg:
-        discs[selection].movable = False
-        
-
 
 # ----------------- game loop ----------------- #
 
@@ -166,19 +151,13 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
 
-        # move discs left or right where possible
+        # move discs left or right when allowed
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             for i, peg in enumerate(board):
                 if discs[selection] in peg and discs[selection].movable:
                     destination = set_destination(i, False)
-
-                    # can't move medium sized disc on top of small disc:
-                    if selection == 1 and discs[2] in board[destination]:
-                        text_selection = 5
-                        break
-
-                    if len(board[destination]) <= selection:
+                    if board[destination] == [] or discs[selection].width <= min(board[destination], key=lambda x: x.width).width:
                         move(selection, destination, peg)
                     else: 
                         text_selection = 5
@@ -188,13 +167,7 @@ while True:
             for i, peg in enumerate(board):
                 if discs[selection] in peg and discs[selection].movable:
                     destination = set_destination(i, True)
-
-                    # can't move medium sized disc on top of small disc:
-                    if selection == 1 and discs[2] in board[destination]:
-                        text_selection = 5
-                        break
-
-                    if len(board[destination]) <= selection:
+                    if board[destination] == [] or discs[selection].width <= min(board[destination], key=lambda x: x.width).width:
                         move(selection, destination, peg)
                     else: 
                         text_selection = 5
@@ -217,5 +190,3 @@ while True:
     all_discs.draw(SCREEN)
     draw_prompt(text_selection)
     pygame.display.update()
-
-
