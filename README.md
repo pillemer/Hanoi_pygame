@@ -8,6 +8,9 @@ The objective of the puzzle is to move the entire stack of discs to another peg,
 3. No larger disc may be placed on top of a smaller disc.
 
 TODO: 
-- Add a way to choose how many discs the puzzle starts with.
-- Better graphics
+- DONE! Add a way to choose how many discs the puzzle starts with.
+- add indication of selected disc when switching
+- difficulty setting on game screen
 - timer / move counter
+- win screen
+- improved looks
